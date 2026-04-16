@@ -11,7 +11,7 @@ HEADERS = {
 
 OUTPUT_FILE = "atacadao_catalog.json"
 
-CONCURRENT_REQUESTS = 10
+CONCURRENT_REQUESTS = 5
 PAGE_SIZE = 50
 
 
