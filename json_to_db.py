@@ -40,7 +40,7 @@ def create_tables(conn):
 
 def insert_data(conn, products):
     cursor = conn.cursor()
-    now = datetime.datetime.now().astimezone().isoformat()
+    now = datetime.utcnow().isoformat()
 
     for product in products:
         items = product.get("items", [])
