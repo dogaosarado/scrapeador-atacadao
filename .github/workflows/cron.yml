@@ -1,8 +1,5 @@
 name: Run Scraper
 
-run: |
-    python novissimoscrapeador.py > scraper.log 2>&1
-
 permissions:
   contents: write
 
