@@ -18,6 +18,8 @@ def create_tables(conn):
         brand TEXT,
         url TEXT,
         image TEXT,
+        first_seen TEXT,
+        last_seen TEXT,
         PRIMARY KEY (sku, ean)
     )
     """)
@@ -31,7 +33,15 @@ def create_tables(conn):
         list_price REAL,
         available BOOLEAN,
         timestamp TEXT,
+        run_id INTEGER,
         FOREIGN KEY (sku, ean) REFERENCES products(sku, ean)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS runs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT
     )
     """)
 
@@ -41,6 +51,14 @@ def create_tables(conn):
 def insert_data(conn, products):
     cursor = conn.cursor()
     now = datetime.utcnow().isoformat()
+
+    # Create run entry
+    cursor.execute(
+        "INSERT INTO runs (timestamp) VALUES (?)",
+        (now,)
+    )
+
+    run_id = cursor.lastrowid
 
     for product in products:
         items = product.get("items", [])
@@ -52,10 +70,11 @@ def insert_data(conn, products):
             if not sku:
                 continue
 
+            # Insert product if new
             cursor.execute("""
             INSERT OR IGNORE INTO products (
-                sku, ean, product_id, name, brand, url, image
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                sku, ean, product_id, name, brand, url, image, first_seen, last_seen
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 sku,
                 ean,
@@ -63,20 +82,31 @@ def insert_data(conn, products):
                 product.get("product_name"),
                 product.get("brand"),
                 product.get("url"),
-                item.get("images", [None])[0]
+                item.get("images", [None])[0],
+                now,
+                now
             ))
 
+            # Always update last_seen
+            cursor.execute("""
+            UPDATE products
+            SET last_seen = ?
+            WHERE sku = ? AND ean = ?
+            """, (now, sku, ean))
+
+            # Insert price
             cursor.execute("""
             INSERT INTO prices (
-                sku, ean, price, list_price, available, timestamp
-            ) VALUES (?, ?, ?, ?, ?, ?)
+                sku, ean, price, list_price, available, timestamp, run_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """, (
                 sku,
                 ean,
                 item.get("price"),
                 item.get("list_price"),
                 item.get("available"),
-                now
+                now,
+                run_id
             ))
 
     conn.commit()
