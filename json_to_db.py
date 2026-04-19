@@ -1,5 +1,6 @@
 import json
 import psycopg2
+import psycopg2.extras
 from datetime import datetime, timezone
 
 from config import DB_CONFIG
@@ -109,8 +110,43 @@ def insert_data(conn, products):
     now = datetime.now(timezone.utc)
 
     with conn.cursor() as cur:
+        # create run
         cur.execute("INSERT INTO runs (timestamp) VALUES (%s) RETURNING id", (now,))
         run_id = cur.fetchone()[0]
+
+        # collect all unique categories and bulk upsert
+        all_categories = set()
+        for product in products:
+            for cat in product.get("categories", []):
+                all_categories.add(cat)
+
+        if all_categories:
+            psycopg2.extras.execute_values(cur, """
+            INSERT INTO categories (category_path, level1, level2, level3)
+            VALUES %s
+            ON CONFLICT (category_path) DO NOTHING
+            """, [
+                (cat, *parse_category(cat))
+                for cat in all_categories
+            ])
+
+        # fetch all category ids into a local dict — no per-row SELECT
+        cur.execute("SELECT category_path, id FROM categories")
+        category_map = {row[0]: row[1] for row in cur.fetchall()}
+
+        # fetch last known prices for change detection — one query, not per-row
+        cur.execute("""
+        SELECT DISTINCT ON (sku, ean) sku, ean, price
+        FROM prices
+        ORDER BY sku, ean, timestamp DESC
+        """)
+        last_prices = {(row[0], row[1]): float(row[2]) for row in cur.fetchall() if row[2] is not None}
+
+        # collect rows for bulk insert
+        product_rows = []
+        price_rows = []
+        price_change_rows = []
+        product_category_rows = []
 
         for product in products:
             categories = product.get("categories", [])
@@ -122,11 +158,9 @@ def insert_data(conn, products):
                 if not sku:
                     continue
 
-                cur.execute("""
-                INSERT INTO products (sku, ean, product_id, name, brand, url, image, first_seen, last_seen)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (sku, ean) DO UPDATE SET last_seen = EXCLUDED.last_seen
-                """, (
+                new_price = item.get("price")
+
+                product_rows.append((
                     sku,
                     ean,
                     product.get("product_id"),
@@ -138,48 +172,7 @@ def insert_data(conn, products):
                     now
                 ))
 
-                for category_path in categories:
-                    level1, level2, level3 = parse_category(category_path)
-
-                    cur.execute("""
-                    INSERT INTO categories (category_path, level1, level2, level3)
-                    VALUES (%s, %s, %s, %s)
-                    ON CONFLICT (category_path) DO NOTHING
-                    """, (category_path, level1, level2, level3))
-
-                    cur.execute("SELECT id FROM categories WHERE category_path = %s", (category_path,))
-                    category_id = cur.fetchone()[0]
-
-                    cur.execute("""
-                    INSERT INTO product_categories (sku, ean, category_id)
-                    VALUES (%s, %s, %s)
-                    ON CONFLICT DO NOTHING
-                    """, (sku, ean, category_id))
-
-                # price change detection
-                cur.execute("""
-                SELECT price FROM prices
-                WHERE sku = %s AND ean = %s
-                ORDER BY timestamp DESC
-                LIMIT 1
-                """, (sku, ean))
-
-                row = cur.fetchone()
-                new_price = item.get("price")
-
-                if row:
-                    old_price = float(row[0])
-                    if old_price != new_price and old_price is not None and new_price is not None:
-                        change_percent = ((new_price - old_price) / old_price) * 100
-                        cur.execute("""
-                        INSERT INTO price_changes (sku, ean, old_price, new_price, change_percent, timestamp)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                        """, (sku, ean, old_price, new_price, change_percent, now))
-
-                cur.execute("""
-                INSERT INTO prices (sku, ean, price, list_price, available, timestamp, run_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, (
+                price_rows.append((
                     sku,
                     ean,
                     new_price,
@@ -189,7 +182,49 @@ def insert_data(conn, products):
                     run_id
                 ))
 
+                # price change detection using local dict
+                old_price = last_prices.get((sku, ean))
+                if old_price is not None and new_price is not None and old_price != new_price:
+                    change_percent = ((new_price - old_price) / old_price) * 100
+                    price_change_rows.append((sku, ean, old_price, new_price, change_percent, now))
+
+                for cat in categories:
+                    cat_id = category_map.get(cat)
+                    if cat_id:
+                        product_category_rows.append((sku, ean, cat_id))
+
+        # bulk insert products
+        if product_rows:
+            psycopg2.extras.execute_values(cur, """
+            INSERT INTO products (sku, ean, product_id, name, brand, url, image, first_seen, last_seen)
+            VALUES %s
+            ON CONFLICT (sku, ean) DO UPDATE SET last_seen = EXCLUDED.last_seen
+            """, product_rows)
+
+        # bulk insert prices
+        if price_rows:
+            psycopg2.extras.execute_values(cur, """
+            INSERT INTO prices (sku, ean, price, list_price, available, timestamp, run_id)
+            VALUES %s
+            """, price_rows)
+
+        # bulk insert price changes
+        if price_change_rows:
+            psycopg2.extras.execute_values(cur, """
+            INSERT INTO price_changes (sku, ean, old_price, new_price, change_percent, timestamp)
+            VALUES %s
+            """, price_change_rows)
+
+        # bulk insert product categories
+        if product_category_rows:
+            psycopg2.extras.execute_values(cur, """
+            INSERT INTO product_categories (sku, ean, category_id)
+            VALUES %s
+            ON CONFLICT DO NOTHING
+            """, product_category_rows)
+
     conn.commit()
+    print(f"Inserted {len(product_rows)} SKUs, {len(price_rows)} price rows, {len(price_change_rows)} price changes")
 
 
 def main():
