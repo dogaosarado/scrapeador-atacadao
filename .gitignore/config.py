@@ -1,7 +1,10 @@
+import os
+
 DB_CONFIG = {
-    "host": "localhost",
-    "port": 5432,
-    "dbname": "atacadao",
-    "user": "atacadao_user",
-    "password": "gugu1289!@*("
+    "host":     os.environ.get("DB_HOST", "ep-frosty-water-am38vdoe-pooler.c-5.us-east-1.aws.neon.tech"),
+    "port":     int(os.environ.get("DB_PORT", 5432)),
+    "dbname":   os.environ.get("DB_NAME", "neondb"),
+    "user":     os.environ.get("DB_USER", "neondb_owner"),
+    "password": os.environ.get("DB_PASSWORD", "npg_vD84nMVrfmXa"),
+    "sslmode":  "require"
 }
