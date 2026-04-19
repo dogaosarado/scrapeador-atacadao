@@ -1,16 +1,20 @@
 name: Run Scraper
 
-permissions:
-  contents: write
-
 on:
   schedule:
     - cron: '0 3,15 * * *'  # 00:00 and 12:00 Brazil (UTC-3)
   workflow_dispatch:
 
 jobs:
-  run-script:
+  run-pipeline:
     runs-on: ubuntu-latest
+
+    env:
+      DB_HOST:     ${{ secrets.DB_HOST }}
+      DB_NAME:     ${{ secrets.DB_NAME }}
+      DB_USER:     ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_PORT:     5432
 
     steps:
       - name: Checkout repo
@@ -22,21 +26,13 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
-      - name: Run scraper
-        run: |
-          python novissimoscrapeador.py
+      - name: Scrape
+        run: python novissimoscrapeador.py
 
-      - name: Convert JSON to DB
-        run: |
-          python json_to_db.py
+      - name: Load into database
+        run: python json_to_db.py
 
-      - name: Commit database
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-          git add .
-          git commit -m "Update database" || echo "No changes"
-          git push
+      - name: Compute volatility metrics
+        run: python compute_volatility.py
