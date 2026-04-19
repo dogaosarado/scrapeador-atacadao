@@ -1,0 +1,4 @@
+config.py
+atacadao_catalog.json
+__pycache__/
+*.pyc

@@ -5,6 +5,10 @@ DB_CONFIG = {
     "port":     int(os.environ.get("DB_PORT", 5432)),
     "dbname":   os.environ.get("DB_NAME", "neondb"),
     "user":     os.environ.get("DB_USER", "neondb_owner"),
-    "password": os.environ.get("DB_PASSWORD", "npg_vD84nMVrfmXa"),
+    "password": os.environ.get("DB_PASSWORD", "AbZInho22344432"),
     "sslmode":  "require"
+<<<<<<< Updated upstream
 }
+=======
+}
+>>>>>>> Stashed changes
