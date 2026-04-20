@@ -2,8 +2,6 @@ import os
 import psycopg2
 from datetime import datetime, timezone
 
-from config import DB_CONFIG
-
 WINDOWS = [7, 30, 90]
 MIN_SAMPLE = 10
 
