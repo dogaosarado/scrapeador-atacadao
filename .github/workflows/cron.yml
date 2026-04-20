@@ -1,35 +1,29 @@
 name: Run Scraper
-
 on:
   schedule:
     - cron: '0 3,15 * * *'  # 00:00 and 12:00 Brazil (UTC-3)
   workflow_dispatch:
-
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
-
     env:
       DB_HOST:     ${{ secrets.DB_HOST }}
       DB_NAME:     ${{ secrets.DB_NAME }}
       DB_USER:     ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_PORT:     5432
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
       - name: Install dependencies
         run: pip install -r requirements.txt
-        
+      - name: Test DB connection
+        run: python -c "import os, psycopg2; conn = psycopg2.connect(host=os.environ['DB_HOST'], dbname=os.environ['DB_NAME'], user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD'], sslmode='require'); print('connected')"
       - name: Scrape and load
         run: python scraper.py
-
       - name: Compute volatility metrics
         run: python compute_volatility.py
