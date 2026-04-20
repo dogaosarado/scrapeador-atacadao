@@ -1,3 +1,4 @@
+import os
 import psycopg2
 from datetime import datetime, timezone
 
@@ -8,7 +9,14 @@ MIN_SAMPLE = 10
 
 
 def get_conn():
-    return psycopg2.connect(**DB_CONFIG)
+    return psycopg2.connect(
+        host=os.environ.get("DB_HOST", "ep-frosty-water-am38vdoe-pooler.c-5.us-east-1.aws.neon.tech"),
+        port=int(os.environ.get("DB_PORT", 5432)),
+        dbname=os.environ.get("DB_NAME", "neondb"),
+        user=os.environ.get("DB_USER", "neondb_owner"),
+        password=os.environ.get("DB_PASSWORD", "Atacadao2025"),
+        sslmode="require"
+    )
 
 
 def compute_and_upsert(conn):
