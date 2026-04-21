@@ -1,8 +1,5 @@
 name: Run Scraper
-on:
-  schedule:
-    - cron: '0 3,15 * * *'  # 00:00 and 12:00 Brazil (UTC-3)
-  workflow_dispatch:
+
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
