@@ -4,16 +4,19 @@ import os
 import psycopg2
 import psycopg2.extras
 from datetime import datetime, timezone
+from xml.etree import ElementTree as ET
+import re
 
 BASE_URL = "https://www.atacadao.com.br/api/io/_v/api/intelligent-search/product_search"
+SITEMAP_URL = "https://www.atacadao.com.br/sitemap.xml"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0",
     "Accept": "application/json"
 }
 
-CONCURRENT_REQUESTS = 5
-PAGE_SIZE = 50
+CONCURRENT_REQUESTS = 20
+BATCH_SIZE = 100
 
 
 def get_conn():
@@ -43,7 +46,6 @@ def create_tables(conn):
             PRIMARY KEY (sku, ean)
         )
         """)
-
         cur.execute("""
         CREATE TABLE IF NOT EXISTS prices (
             id          SERIAL PRIMARY KEY,
@@ -57,14 +59,12 @@ def create_tables(conn):
             FOREIGN KEY (sku, ean) REFERENCES products(sku, ean)
         )
         """)
-
         cur.execute("""
         CREATE TABLE IF NOT EXISTS runs (
             id          SERIAL PRIMARY KEY,
             timestamp   TIMESTAMPTZ
         )
         """)
-
         cur.execute("""
         CREATE TABLE IF NOT EXISTS categories (
             id              SERIAL PRIMARY KEY,
@@ -74,7 +74,6 @@ def create_tables(conn):
             level3          TEXT
         )
         """)
-
         cur.execute("""
         CREATE TABLE IF NOT EXISTS product_categories (
             sku         TEXT,
@@ -83,7 +82,6 @@ def create_tables(conn):
             PRIMARY KEY (sku, ean, category_id)
         )
         """)
-
         cur.execute("""
         CREATE TABLE IF NOT EXISTS price_changes (
             id              SERIAL PRIMARY KEY,
@@ -95,7 +93,6 @@ def create_tables(conn):
             timestamp       TIMESTAMPTZ
         )
         """)
-
         cur.execute("""
         CREATE TABLE IF NOT EXISTS volatility_metrics (
             sku          TEXT,
@@ -109,7 +106,6 @@ def create_tables(conn):
             PRIMARY KEY (sku, ean, window_days)
         )
         """)
-
     conn.commit()
 
 
@@ -124,11 +120,9 @@ def parse_category(category_path):
 def extract(product):
     try:
         skus = []
-
         for item in product.get("items", []):
             seller = item.get("sellers", [{}])[0]
             offer = seller.get("commertialOffer", {})
-
             skus.append({
                 "sku": item.get("itemId"),
                 "ean": item.get("ean"),
@@ -147,26 +141,50 @@ def extract(product):
             "categories": product.get("categories", []),
             "items": skus,
         }
-
     except Exception:
         return None
 
 
-async def fetch_page(session, page):
-    params = {
-        "q": "",
-        "from": page * PAGE_SIZE,
-        "to": (page + 1) * PAGE_SIZE - 1
-    }
+async def fetch_sitemap_index(session):
+    async with session.get(SITEMAP_URL, headers=HEADERS) as response:
+        text = await response.text()
+    root = ET.fromstring(text)
+    ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+    urls = [loc.text for loc in root.findall(".//sm:loc", ns)]
+    return [u for u in urls if "/sitemap/product-" in u]
 
+
+async def fetch_product_ids_from_sitemap(session, url):
+    try:
+        async with session.get(url, headers=HEADERS) as response:
+            text = await response.text()
+        root = ET.fromstring(text)
+        ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+        product_ids = []
+        for loc in root.findall(".//sm:loc", ns):
+            match = re.search(r'-(\d+)/p$', loc.text)
+            if match:
+                product_ids.append(match.group(1))
+        return product_ids
+    except Exception:
+        return []
+
+
+async def fetch_product(session, product_id):
+    params = {"q": product_id, "from": 0, "to": 0}
     try:
         async with session.get(BASE_URL, headers=HEADERS, params=params) as response:
             if response.status != 200:
-                return []
+                return None
             data = await response.json()
-            return data.get("products", [])
+            products = data.get("products", [])
+            # match exact product id
+            for p in products:
+                if p.get("productId") == product_id:
+                    return extract(p)
+            return None
     except Exception:
-        return []
+        return None
 
 
 def insert_batch(conn, products, run_id, now, last_prices, category_map):
@@ -176,7 +194,6 @@ def insert_batch(conn, products, run_id, now, last_prices, category_map):
             all_categories.add(cat)
 
     with conn.cursor() as cur:
-        # upsert new categories
         if all_categories:
             new_cats = [c for c in all_categories if c not in category_map]
             if new_cats:
@@ -201,7 +218,6 @@ def insert_batch(conn, products, run_id, now, last_prices, category_map):
             for item in product.get("items", []):
                 sku = item.get("sku")
                 ean = item.get("ean")
-
                 if not sku:
                     continue
 
@@ -268,49 +284,56 @@ async def scrape():
     with conn.cursor() as cur:
         cur.execute("INSERT INTO runs (timestamp) VALUES (%s) RETURNING id", (now,))
         run_id = cur.fetchone()[0]
-
         cur.execute("""
         SELECT DISTINCT ON (sku, ean) sku, ean, price
         FROM prices
         ORDER BY sku, ean, timestamp DESC
         """)
         last_prices = {(row[0], row[1]): float(row[2]) for row in cur.fetchall() if row[2] is not None}
-
         cur.execute("SELECT category_path, id FROM categories")
         category_map = {row[0]: row[1] for row in cur.fetchall()}
-
     conn.commit()
 
-    total = 0
-    seen_ids = set()
-    page = 0
-
     async with aiohttp.ClientSession() as session:
-        while True:
-            tasks = [fetch_page(session, page + i) for i in range(CONCURRENT_REQUESTS)]
-            pages = await asyncio.gather(*tasks)
+        print("Fetching sitemap index...")
+        sitemap_urls = await fetch_sitemap_index(session)
+        print(f"Found {len(sitemap_urls)} product sitemaps")
 
-            stop = True
-            batch = []
+        # fetch all product IDs from all sitemaps concurrently
+        semaphore = asyncio.Semaphore(CONCURRENT_REQUESTS)
 
-            for products in pages:
-                if products:
-                    stop = False
-                for p in products:
-                    data = extract(p)
-                    if data and data["product_id"] not in seen_ids:
-                        seen_ids.add(data["product_id"])
-                        batch.append(data)
+        async def fetch_with_sem_xml(url):
+            async with semaphore:
+                return await fetch_product_ids_from_sitemap(session, url)
 
-            if batch:
+        results = await asyncio.gather(*[fetch_with_sem_xml(u) for u in sitemap_urls])
+        all_product_ids = list({pid for sublist in results for pid in sublist})
+        print(f"Found {len(all_product_ids)} unique product IDs")
+
+        # fetch each product
+        total = 0
+        batch = []
+
+        async def fetch_with_sem(pid):
+            async with semaphore:
+                return await fetch_product(session, pid)
+
+        tasks = [fetch_with_sem(pid) for pid in all_product_ids]
+
+        for i, coro in enumerate(asyncio.as_completed(tasks)):
+            product = await coro
+            if product:
+                batch.append(product)
+
+            if len(batch) >= BATCH_SIZE:
                 inserted = insert_batch(conn, batch, run_id, now, last_prices, category_map)
                 total += inserted
-                print(f"Scraped and inserted {total} SKUs so far")
+                batch = []
+                print(f"Inserted {total} SKUs so far...")
 
-            if stop:
-                break
-
-            page += CONCURRENT_REQUESTS
+        if batch:
+            inserted = insert_batch(conn, batch, run_id, now, last_prices, category_map)
+            total += inserted
 
     conn.close()
     print(f"Done. Total SKUs inserted: {total}")
