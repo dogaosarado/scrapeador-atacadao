@@ -1,2 +1,4 @@
-aiohttp
+fastapi
+uvicorn
 psycopg2-binary
+aiohttp
