@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ofertasdobliu</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0a0a0a;
+            --surface: #111111;
+            --border: #222222;
+            --accent: #e8ff47;
+            --text: #f0f0f0;
+            --muted: #666666;
+            --card-bg: #141414;
+        }
+
+        html,
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .nav-logo span {
+            color: var(--accent);
+        }
+
+        .back-link {
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .back-link:hover {
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 2.5rem 2rem;
+        }
+
+        /* PRODUCT HEADER */
+        .product-header {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+            margin-bottom: 3rem;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        .product-image {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .product-image-placeholder {
+            width: 140px;
+            height: 140px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .product-meta {
+            flex: 1;
+        }
+
+        .product-brand {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .product-name {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .product-price {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 2rem;
+            color: var(--accent);
+            margin-bottom: 0.4rem;
+        }
+
+        .product-list-price {
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-decoration: line-through;
+            margin-bottom: 0.5rem;
+        }
+
+        .availability {
+            display: inline-block;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 2px;
+            font-weight: 500;
+        }
+
+        .availability.in {
+            background: rgba(232, 255, 71, 0.1);
+            color: var(--accent);
+        }
+
+        .availability.out {
+            background: rgba(255, 100, 100, 0.1);
+            color: #ff6464;
+        }
+
+        .external-link {
+            display: inline-block;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-decoration: none;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1px;
+            transition: color 0.15s, border-color 0.15s;
+        }
+
+        .external-link:hover {
+            color: var(--text);
+            border-color: var(--muted);
+        }
+
+        /* SECTIONS */
+        .section {
+            margin-bottom: 3rem;
+            animation: fadeUp 0.5s 0.1s ease both;
+        }
+
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* CHART */
+        .chart-wrap {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1.5rem;
+        }
+
+        .chart-filters {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .filter-btn {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 2px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .filter-btn.active {
+            background: var(--accent);
+            color: #0a0a0a;
+            border-color: var(--accent);
+            font-weight: 500;
+        }
+
+        .filter-btn:hover:not(.active) {
+            border-color: var(--muted);
+            color: var(--text);
+        }
+
+        canvas {
+            max-height: 280px;
+        }
+
+        /* VOLATILITY */
+        .vol-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .vol-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1.25rem;
+        }
+
+        .vol-window {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .vol-cv {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.6rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .vol-stats {
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.8;
+        }
+
+        .vol-stats span {
+            color: var(--text);
+        }
+
+        .vol-empty {
+            color: var(--muted);
+            font-size: 0.85rem;
+            padding: 1rem 0;
+        }
+
+        .loading {
+            color: var(--muted);
+            font-size: 0.85rem;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .product-header {
+                flex-direction: column;
+            }
+
+            .vol-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <a class="nav-logo" href="/">ofertas<span>dobliu</span></a>
+        <a class="back-link" href="javascript:history.back()">← voltar</a>
+    </nav>
+
+    <div class="container">
+        <div id="product-header" class="product-header">
+            <p class="loading">carregando...</p>
+        </div>
+
+        <div class="section">
+            <p class="section-title">histórico de preços</p>
+            <div class="chart-wrap">
+                <div class="chart-filters">
+                    <button class="filter-btn active" data-days="7">7d</button>
+                    <button class="filter-btn" data-days="30">30d</button>
+                    <button class="filter-btn" data-days="90">90d</button>
+                    <button class="filter-btn" data-days="0">tudo</button>
+                </div>
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+
+        <div class="section">
+            <p class="section-title">volatilidade</p>
+            <div id="volatility-grid" class="vol-grid">
+                <p class="loading">carregando...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:8000';
+
+        const params = new URLSearchParams(window.location.search);
+        const sku = params.get('sku');
+        const ean = params.get('ean');
+
+        if (!sku) {
+            document.getElementById('product-header').innerHTML = '<p class="loading">produto não encontrado</p>';
+        } else {
+            loadProduct();
+        }
+
+        let allHistory = [];
+        let chart = null;
+
+        async function loadProduct() {
+            try {
+                const [histRes, volRes] = await Promise.all([
+                    fetch(`${API}/products/${sku}/history`),
+                    fetch(`${API}/volatility/sku?sku=${sku}&ean=${encodeURIComponent(ean)}`)
+                ]);
+
+                const history = await histRes.json();
+                const volatility = await volRes.json();
+
+                allHistory = history;
+
+                renderHeader(history);
+                renderChart(history, 7);
+                renderVolatility(volatility);
+
+            } catch (e) {
+                document.getElementById('product-header').innerHTML = '<p class="loading">erro ao carregar produto</p>';
+            }
+        }
+
+        function renderHeader(history) {
+            const latest = history[history.length - 1];
+            const productName = params.get('name') || '—';
+            const brand = params.get('brand') || '';
+            const image = params.get('image') || '';
+            const url = params.get('url') || '#';
+
+            const price = latest ? formatPrice(latest.price) : null;
+            const listPrice = latest?.list_price && latest.list_price !== latest.price
+                ? formatPrice(latest.list_price) : null;
+            const available = latest?.available;
+
+            const thumb = image
+                ? `<img class="product-image" src="${image}" alt="" onerror="this.style.display='none'">`
+                : `<div class="product-image-placeholder"></div>`;
+
+            document.getElementById('product-header').innerHTML = `
+      ${thumb}
+      <div class="product-meta">
+        <p class="product-brand">${brand}</p>
+        <h1 class="product-name">${decodeURIComponent(productName)}</h1>
+        ${price ? `<p class="product-price">${price}</p>` : ''}
+        ${listPrice ? `<p class="product-list-price">${listPrice}</p>` : ''}
+        <span class="availability ${available ? 'in' : 'out'}">
+          ${available ? 'disponível' : 'indisponível'}
+        </span>
+        <br>
+        <a class="external-link" href="${decodeURIComponent(url)}" target="_blank" rel="noopener">
+          ver no atacadão ↗
+        </a>
+      </div>
+    `;
+        }
+
+        function filterHistory(days) {
+            if (days === 0) return allHistory;
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - days);
+            return allHistory.filter(r => new Date(r.timestamp) >= cutoff);
+        }
+
+        function renderChart(history, days) {
+            const data = filterHistory(days);
+
+            const labels = data.map(r => {
+                const d = new Date(r.timestamp);
+                return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+            });
+
+            const prices = data.map(r => r.price);
+
+            if (chart) chart.destroy();
+
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        data: prices,
+                        borderColor: '#e8ff47',
+                        backgroundColor: 'rgba(232,255,71,0.06)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#e8ff47',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => formatPrice(ctx.parsed.y)
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#666', font: { size: 11 } },
+                            grid: { color: '#1a1a1a' }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#666',
+                                font: { size: 11 },
+                                callback: v => formatPrice(v)
+                            },
+                            grid: { color: '#1a1a1a' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderVolatility(items) {
+            const grid = document.getElementById('volatility-grid');
+
+            if (!items.length) {
+                grid.innerHTML = '<p class="vol-empty">dados insuficientes — volte em alguns dias</p>';
+                return;
+            }
+
+            const windows = [7, 30, 90];
+            grid.innerHTML = windows.map(w => {
+                const v = items.find(i => i.window_days === w);
+                if (!v) return `
+        <div class="vol-card">
+          <p class="vol-window">${w} dias</p>
+          <p class="vol-stats" style="color:var(--muted)">sem dados</p>
+        </div>`;
+
+                const cv = (v.cv * 100).toFixed(2);
+                return `
+        <div class="vol-card">
+          <p class="vol-window">${w} dias</p>
+          <p class="vol-cv">${cv}%</p>
+          <div class="vol-stats">
+            <div>média <span>${formatPrice(v.mean_price)}</span></div>
+            <div>desvio <span>${formatPrice(v.stddev_price)}</span></div>
+            <div>amostras <span>${v.sample_size}</span></div>
+          </div>
+        </div>`;
+            }).join('');
+        }
+
+        // filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderChart(allHistory, parseInt(btn.dataset.days));
+            });
+        });
+
+        function formatPrice(v) {
+            if (v == null) return '—';
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+        }
+    </script>
+
+</body>
+
+</html>

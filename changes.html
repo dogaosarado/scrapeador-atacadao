@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>variações de preço · ofertasdobliu</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0a0a0a;
+            --surface: #111111;
+            --border: #222222;
+            --accent: #e8ff47;
+            --text: #f0f0f0;
+            --muted: #666666;
+            --card-bg: #141414;
+            --up: #ff6464;
+            --down: #47ff8f;
+        }
+
+        html,
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .nav-logo span {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 2.5rem 2rem;
+        }
+
+        .page-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            margin-bottom: 0.5rem;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        .page-subtitle {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 2rem;
+            animation: fadeUp 0.5s 0.05s ease both;
+        }
+
+        /* FILTERS */
+        .filters {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            animation: fadeUp 0.5s 0.1s ease both;
+        }
+
+        .filter-btn {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 2px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .filter-btn.active {
+            background: var(--accent);
+            color: #0a0a0a;
+            border-color: var(--accent);
+            font-weight: 500;
+        }
+
+        .filter-btn:hover:not(.active) {
+            border-color: var(--muted);
+            color: var(--text);
+        }
+
+        /* TABLE */
+        .changes-list {
+            animation: fadeUp 0.5s 0.15s ease both;
+        }
+
+        .change-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.875rem 1rem;
+            margin-bottom: 0.5rem;
+            text-decoration: none;
+            color: inherit;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        .change-card:hover {
+            border-color: var(--accent);
+            background: #181818;
+        }
+
+        .product-thumb {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            background: #1a1a1a;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .product-thumb-placeholder {
+            width: 44px;
+            height: 44px;
+            background: #1a1a1a;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .change-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .change-name {
+            font-size: 0.88rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .change-meta {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 0.2rem;
+        }
+
+        .change-prices {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.2rem;
+            flex-shrink: 0;
+        }
+
+        .new-price {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .old-price {
+            font-size: 0.75rem;
+            color: var(--muted);
+            text-decoration: line-through;
+        }
+
+        .change-badge {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 2px;
+            flex-shrink: 0;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .change-badge.up {
+            background: rgba(255, 100, 100, 0.1);
+            color: var(--up);
+        }
+
+        .change-badge.down {
+            background: rgba(71, 255, 143, 0.1);
+            color: var(--down);
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+            padding: 3rem 0;
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+            padding: 3rem 0;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .change-badge {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <a class="nav-logo" href="/">ofertas<span>dobliu</span></a>
+        <ul class="nav-links">
+            <li><a href="changes.html" class="active">Variações</a></li>
+            <li><a href="volatility.html">Volatilidade</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h1 class="page-title">variações de preço</h1>
+        <p class="page-subtitle">últimas alterações detectadas nas duas coletas diárias</p>
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">todos</button>
+            <button class="filter-btn" data-filter="up">aumentos</button>
+            <button class="filter-btn" data-filter="down">reduções</button>
+        </div>
+
+        <div class="changes-list" id="changes-list">
+            <p class="loading">carregando...</p>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:8000';
+        let allChanges = [];
+        let currentFilter = 'all';
+
+        async function loadChanges() {
+            try {
+                const res = await fetch(`${API}/price-changes?limit=100`);
+                allChanges = await res.json();
+                renderChanges();
+            } catch (e) {
+                document.getElementById('changes-list').innerHTML = '<p class="empty">erro ao carregar dados</p>';
+            }
+        }
+
+        function renderChanges() {
+            const list = document.getElementById('changes-list');
+
+            let items = allChanges;
+            if (currentFilter === 'up') items = allChanges.filter(i => i.change_percent > 0);
+            if (currentFilter === 'down') items = allChanges.filter(i => i.change_percent < 0);
+
+            if (!items.length) {
+                list.innerHTML = '<p class="empty">nenhuma variação encontrada</p>';
+                return;
+            }
+
+            list.innerHTML = items.map(item => {
+                const isUp = item.change_percent > 0;
+                const pct = (isUp ? '+' : '') + item.change_percent.toFixed(2) + '%';
+                const thumb = item.image
+                    ? `<img class="product-thumb" src="${item.image}" alt="" loading="lazy" onerror="this.style.display='none'">`
+                    : `<div class="product-thumb-placeholder"></div>`;
+
+                const date = new Date(item.timestamp).toLocaleDateString('pt-BR', {
+                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                });
+
+                const productUrl = `product.html?sku=${item.sku}&ean=${encodeURIComponent(item.ean)}&name=${encodeURIComponent(item.name)}&brand=${encodeURIComponent(item.brand || '')}&image=${encodeURIComponent(item.image || '')}&url=${encodeURIComponent(item.url)}`;
+
+                return `
+        <a class="change-card" href="${productUrl}">
+          ${thumb}
+          <div class="change-info">
+            <div class="change-name">${item.name || '—'}</div>
+            <div class="change-meta">${item.brand || ''} · ${date}</div>
+          </div>
+          <div class="change-prices">
+            <span class="new-price">${formatPrice(item.new_price)}</span>
+            <span class="old-price">${formatPrice(item.old_price)}</span>
+          </div>
+          <span class="change-badge ${isUp ? 'up' : 'down'}">${pct}</span>
+        </a>`;
+            }).join('');
+        }
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderChanges();
+            });
+        });
+
+        function formatPrice(v) {
+            if (v == null) return '—';
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+        }
+
+        loadChanges();
+    </script>
+
+</body>
+
+</html>

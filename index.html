@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ofertasdobliu</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0a0a0a;
+            --surface: #111111;
+            --border: #222222;
+            --accent: #e8ff47;
+            --accent-dim: #b8cc2a;
+            --text: #f0f0f0;
+            --muted: #666666;
+            --card-bg: #141414;
+        }
+
+        html,
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        /* HERO */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(232, 255, 71, 0.07) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -60%);
+            pointer-events: none;
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            letter-spacing: -0.03em;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+            animation: fadeUp 0.6s ease both;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .tagline {
+            font-size: 0.95rem;
+            color: var(--muted);
+            margin-bottom: 3rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            animation: fadeUp 0.6s 0.1s ease both;
+        }
+
+        /* SEARCH */
+        .search-wrap {
+            width: 100%;
+            max-width: 640px;
+            position: relative;
+            animation: fadeUp 0.6s 0.2s ease both;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 4px;
+            padding: 1rem 1.25rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input::placeholder {
+            color: var(--muted);
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+        }
+
+        .search-hint {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-top: 0.75rem;
+            text-align: center;
+        }
+
+        /* RESULTS */
+        .results-section {
+            width: 100%;
+            max-width: 640px;
+            margin-top: 1.5rem;
+            animation: fadeUp 0.3s ease both;
+        }
+
+        .results-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .product-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.875rem 1rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .product-card:hover {
+            border-color: var(--accent);
+            background: #181818;
+        }
+
+        .product-thumb {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            border-radius: 2px;
+            background: #1a1a1a;
+            flex-shrink: 0;
+        }
+
+        .product-thumb-placeholder {
+            width: 48px;
+            height: 48px;
+            background: #1a1a1a;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .product-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .product-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .product-brand {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 0.15rem;
+        }
+
+        .product-price {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--accent);
+            white-space: nowrap;
+        }
+
+        .product-unavailable {
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        .no-results {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            padding: 2rem 0;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+            padding: 1.5rem 0;
+            letter-spacing: 0.05em;
+        }
+
+        /* NAV */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            z-index: 100;
+            background: linear-gradient(to bottom, rgba(10, 10, 10, 0.9), transparent);
+        }
+
+        .nav-logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .nav-logo span {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-decoration: none;
+            letter-spacing: 0.04em;
+            transition: color 0.15s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text);
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <a class="nav-logo" href="/">ofertas<span>dobliu</span></a>
+        <ul class="nav-links">
+            <li><a href="changes.html">Variações</a></li>
+            <li><a href="volatility.html">Volatilidade</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <h1 class="logo">ofertas<span>dobliu</span></h1>
+        <p class="tagline">rastreador de preços · atacadão</p>
+
+        <div class="search-wrap">
+            <input class="search-input" type="text" id="search"
+                placeholder="buscar produto — ex: arroz, feijão, leite..." autocomplete="off" />
+            <p class="search-hint">digite para buscar em tempo real</p>
+
+            <div class="results-section" id="results" style="display:none"></div>
+        </div>
+    </section>
+
+    <script>
+        const API = 'http://localhost:8000';
+
+        const input = document.getElementById('search');
+        const results = document.getElementById('results');
+
+        let debounceTimer;
+
+        input.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            const q = input.value.trim();
+
+            if (q.length < 2) {
+                results.style.display = 'none';
+                results.innerHTML = '';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => fetchResults(q), 300);
+        });
+
+        async function fetchResults(q) {
+            results.style.display = 'block';
+            results.innerHTML = '<p class="loading">buscando...</p>';
+
+            try {
+                const res = await fetch(`${API}/products/search?q=${encodeURIComponent(q)}&limit=10`);
+                const data = await res.json();
+                renderResults(data);
+            } catch (e) {
+                results.innerHTML = '<p class="no-results">erro ao buscar produtos</p>';
+            }
+        }
+
+        function formatPrice(price) {
+            if (price == null) return null;
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
+        }
+
+        function renderResults(items) {
+            if (!items.length) {
+                results.innerHTML = '<p class="no-results">nenhum produto encontrado</p>';
+                return;
+            }
+
+            const label = `<p class="results-label">${items.length} produto${items.length > 1 ? 's' : ''} encontrado${items.length > 1 ? 's' : ''}</p>`;
+
+            const cards = items.map(item => {
+                const price = formatPrice(item.price);
+
+                const thumb = item.image
+                    ? `<img class="product-thumb" src="${item.image}" alt="" loading="lazy" onerror="this.style.display='none'">`
+                    : `<div class="product-thumb-placeholder"></div>`;
+
+                const priceEl = price
+                    ? `<span class="product-price">${price}</span>`
+                    : `<span class="product-unavailable">indisponível</span>`;
+
+                const productUrl = `product.html?sku=${item.sku}&ean=${encodeURIComponent(item.ean)}&name=${encodeURIComponent(item.name)}&brand=${encodeURIComponent(item.brand || '')}&image=${encodeURIComponent(item.image || '')}&url=${encodeURIComponent(item.url)}`;
+
+                return `
+      <a class="product-card" href="${productUrl}">
+        ${thumb}
+        <div class="product-info">
+          <div class="product-name">${item.name || '—'}</div>
+          <div class="product-brand">${item.brand || ''}</div>
+        </div>
+        ${priceEl}
+      </a>`;
+            }).join('');
+
+            results.innerHTML = label + cards;
+        }
+    </script>
+
+</body>
+
+</html>

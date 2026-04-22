@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>volatilidade · ofertasdobliu</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0a0a0a;
+            --surface: #111111;
+            --border: #222222;
+            --accent: #e8ff47;
+            --text: #f0f0f0;
+            --muted: #666666;
+            --card-bg: #141414;
+        }
+
+        html,
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .nav-logo span {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 2.5rem 2rem;
+        }
+
+        .page-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            margin-bottom: 0.5rem;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        .page-subtitle {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 2rem;
+            animation: fadeUp 0.5s 0.05s ease both;
+        }
+
+        .filters {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            animation: fadeUp 0.5s 0.1s ease both;
+        }
+
+        .filter-btn {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 2px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .filter-btn.active {
+            background: var(--accent);
+            color: #0a0a0a;
+            border-color: var(--accent);
+            font-weight: 500;
+        }
+
+        .filter-btn:hover:not(.active) {
+            border-color: var(--muted);
+            color: var(--text);
+        }
+
+        .vol-list {
+            animation: fadeUp 0.5s 0.15s ease both;
+        }
+
+        .vol-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.875rem 1rem;
+            margin-bottom: 0.5rem;
+            text-decoration: none;
+            color: inherit;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        .vol-card:hover {
+            border-color: var(--accent);
+            background: #181818;
+        }
+
+        .rank {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: var(--muted);
+            width: 24px;
+            flex-shrink: 0;
+            text-align: right;
+        }
+
+        .product-thumb {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            background: #1a1a1a;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .product-thumb-placeholder {
+            width: 44px;
+            height: 44px;
+            background: #1a1a1a;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .vol-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .vol-name {
+            font-size: 0.88rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .vol-meta {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 0.2rem;
+        }
+
+        .vol-stats {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.15rem;
+            flex-shrink: 0;
+        }
+
+        .vol-cv {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--accent);
+        }
+
+        .vol-mean {
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        .cv-bar-wrap {
+            width: 80px;
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .cv-bar {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+            padding: 3rem 0;
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+            padding: 3rem 0;
+        }
+
+        .cv-explanation {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1rem 1.25rem;
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            animation: fadeUp 0.5s 0.1s ease both;
+        }
+
+        .cv-explanation strong {
+            color: var(--text);
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .cv-bar-wrap {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <a class="nav-logo" href="/">ofertas<span>dobliu</span></a>
+        <ul class="nav-links">
+            <li><a href="changes.html">Variações</a></li>
+            <li><a href="volatility.html" class="active">Volatilidade</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h1 class="page-title">produtos mais voláteis</h1>
+        <p class="page-subtitle">ranqueados por coeficiente de variação (CV) — quanto maior, mais instável o preço</p>
+
+        <div class="cv-explanation">
+            <strong>O que é CV?</strong> O coeficiente de variação mede o quanto o preço oscila em relação à sua média.
+            Um CV de 10% significa que o preço típico varia ±10% ao redor da média — útil para comparar produtos com
+            preços muito diferentes.
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" data-days="30">30 dias</button>
+            <button class="filter-btn" data-days="7">7 dias</button>
+            <button class="filter-btn" data-days="90">90 dias</button>
+        </div>
+
+        <div class="vol-list" id="vol-list">
+            <p class="loading">carregando...</p>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:8000';
+        let currentWindow = 30;
+
+        async function loadVolatility(days) {
+            const list = document.getElementById('vol-list');
+            list.innerHTML = '<p class="loading">carregando...</p>';
+
+            try {
+                const res = await fetch(`${API}/volatility?window_days=${days}&limit=50`);
+                const data = await res.json();
+                renderList(data);
+            } catch (e) {
+                list.innerHTML = '<p class="empty">erro ao carregar dados</p>';
+            }
+        }
+
+        function renderList(items) {
+            const list = document.getElementById('vol-list');
+
+            if (!items.length) {
+                list.innerHTML = '<p class="empty">dados insuficientes — volte em alguns dias após acumular histórico de preços</p>';
+                return;
+            }
+
+            const maxCV = Math.max(...items.map(i => parseFloat(i.cv)));
+
+            list.innerHTML = items.map((item, idx) => {
+                const cv = (parseFloat(item.cv) * 100).toFixed(2);
+                const barWidth = maxCV > 0 ? (parseFloat(item.cv) / maxCV * 100).toFixed(1) : 0;
+
+                const thumb = item.image
+                    ? `<img class="product-thumb" src="${item.image}" alt="" loading="lazy" onerror="this.style.display='none'">`
+                    : `<div class="product-thumb-placeholder"></div>`;
+
+                const productUrl = `product.html?sku=${item.sku}&ean=${encodeURIComponent(item.ean)}&name=${encodeURIComponent(item.name)}&brand=${encodeURIComponent(item.brand || '')}&image=${encodeURIComponent(item.image || '')}&url=${encodeURIComponent(item.url)}`;
+
+                return `
+        <a class="vol-card" href="${productUrl}">
+          <span class="rank">${idx + 1}</span>
+          ${thumb}
+          <div class="vol-info">
+            <div class="vol-name">${item.name || '—'}</div>
+            <div class="vol-meta">${item.brand || ''} · média ${formatPrice(item.mean_price)}</div>
+          </div>
+          <div class="cv-bar-wrap">
+            <div class="cv-bar" style="width:${barWidth}%"></div>
+          </div>
+          <div class="vol-stats">
+            <span class="vol-cv">${cv}%</span>
+            <span class="vol-mean">CV</span>
+          </div>
+        </a>`;
+            }).join('');
+        }
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentWindow = parseInt(btn.dataset.days);
+                loadVolatility(currentWindow);
+            });
+        });
+
+        function formatPrice(v) {
+            if (v == null) return '—';
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+        }
+
+        loadVolatility(currentWindow);
+    </script>
+
+</body>
+
+</html>
