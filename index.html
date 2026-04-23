@@ -350,12 +350,17 @@
         async function fetchResults(q) {
             results.style.display = 'block';
             results.innerHTML = '<p class="loading">buscando...</p>';
-
             try {
                 const res = await fetch(`${API}/products/search?q=${encodeURIComponent(q)}&limit=5`);
                 const data = await res.json();
-                renderResults(data);
+                try {
+                    renderResults(data);
+                } catch (renderError) {
+                    console.error('renderResults error:', renderError);
+                    results.innerHTML = '<p class="no-results">render error: ' + renderError.message + '</p>';
+                }
             } catch (e) {
+                console.error('fetch error:', e);
                 results.innerHTML = '<p class="no-results">erro ao buscar produtos</p>';
             }
         }
