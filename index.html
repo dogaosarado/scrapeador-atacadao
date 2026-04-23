@@ -386,21 +386,20 @@
 
                 const productUrl = `product.html?sku=${item.sku}&ean=${encodeURIComponent(item.ean)}&name=${encodeURIComponent(item.name)}&brand=${encodeURIComponent(item.brand || '')}&image=${encodeURIComponent(item.image || '')}&url=${encodeURIComponent(item.url)}`;
 
-                const verTodos = `<a class="ver-todos" href="search.html?q=${encodeURIComponent(input.value.trim())}">ver todos os resultados →</a>`;
-                results.innerHTML = label + cards + verTodos;
-
                 return `
-      <a class="product-card" href="${productUrl}">
-        ${thumb}
-        <div class="product-info">
-          <div class="product-name">${item.name || '—'}</div>
-          <div class="product-brand">${item.brand || ''}</div>
-        </div>
-        ${priceEl}
-      </a>`;
+            <a class="product-card" href="${productUrl}">
+                ${thumb}
+                <div class="product-info">
+                    <div class="product-name">${item.name || '—'}</div>
+                    <div class="product-brand">${item.brand || ''}</div>
+                </div>
+                ${priceEl}
+            </a>`;
             }).join('');
 
-            results.innerHTML = label + cards;
+            const verTodos = `<a class="ver-todos" href="search.html?q=${encodeURIComponent(input.value.trim())}">ver todos os resultados →</a>`;
+
+            results.innerHTML = label + cards + verTodos;
         }
     </script>
 
