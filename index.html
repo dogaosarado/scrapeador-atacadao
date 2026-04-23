@@ -353,14 +353,9 @@
             try {
                 const res = await fetch(`${API}/products/search?q=${encodeURIComponent(q)}&limit=5`);
                 const data = await res.json();
-                try {
-                    renderResults(data);
-                } catch (renderError) {
-                    console.error('renderResults error:', renderError);
-                    results.innerHTML = '<p class="no-results">render error: ' + renderError.message + '</p>';
-                }
+                renderResults(data);
             } catch (e) {
-                console.error('fetch error:', e);
+                console.error(e);
                 results.innerHTML = '<p class="no-results">erro ao buscar produtos</p>';
             }
         }
