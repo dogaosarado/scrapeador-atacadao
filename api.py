@@ -40,21 +40,26 @@ def get_products():
 
 @app.get("/products/search")
 def search_products(q: str = "", limit: int = 20):
+    if not q or len(q) < 2:
+        return []
+
     conn = get_conn()
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("""
         SELECT DISTINCT ON (p.sku, p.ean)
             p.sku, p.ean, p.name, p.brand, p.url, p.image,
-            pr.price, pr.list_price, pr.available
+            pr.price, pr.list_price, pr.available,
+            ts_rank(p.search_vector, plainto_tsquery('portuguese', %s)) AS rank
         FROM products p
         LEFT JOIN (
             SELECT DISTINCT ON (sku, ean) sku, ean, price, list_price, available
             FROM prices
             ORDER BY sku, ean, timestamp DESC
         ) pr ON p.sku = pr.sku AND p.ean = pr.ean
-        WHERE p.name ILIKE %s OR p.brand ILIKE %s
+        WHERE p.search_vector @@ plainto_tsquery('portuguese', %s)
+        ORDER BY p.sku, p.ean, rank DESC
         LIMIT %s
-        """, (f"%{q}%", f"%{q}%", limit))
+        """, (q, q, limit))
         rows = cur.fetchall()
     conn.close()
     return list(rows)

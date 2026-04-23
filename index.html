@@ -327,7 +327,7 @@
             results.innerHTML = '<p class="loading">buscando...</p>';
 
             try {
-                const res = await fetch(`${API}/products/search?q=${encodeURIComponent(q)}&limit=10`);
+                const res = await fetch(`${API}/products/search?q=${encodeURIComponent(q)}&limit=5`);
                 const data = await res.json();
                 renderResults(data);
             } catch (e) {
