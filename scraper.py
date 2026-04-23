@@ -15,7 +15,7 @@ HEADERS = {
     "Accept": "application/json"
 }
 
-CONCURRENT_REQUESTS = 20
+CONCURRENT_REQUESTS = 5
 BATCH_SIZE = 100
 
 
@@ -169,22 +169,25 @@ async def fetch_product_ids_from_sitemap(session, url):
     except Exception:
         return []
 
-
-async def fetch_product(session, product_id):
+async def fetch_product(session, product_id, retries=3):
     params = {"q": product_id, "from": 0, "to": 0}
-    try:
-        async with session.get(BASE_URL, headers=HEADERS, params=params) as response:
-            if response.status != 200:
+    for attempt in range(retries):
+        try:
+            async with session.get(BASE_URL, headers=HEADERS, params=params) as response:
+                if response.status == 429:
+                    await asyncio.sleep(5 * (attempt + 1))
+                    continue
+                if response.status != 200:
+                    return None
+                data = await response.json()
+                products = data.get("products", [])
+                for p in products:
+                    if p.get("productId") == product_id:
+                        return extract(p)
                 return None
-            data = await response.json()
-            products = data.get("products", [])
-            # match exact product id
-            for p in products:
-                if p.get("productId") == product_id:
-                    return extract(p)
-            return None
-    except Exception:
-        return None
+        except Exception:
+            await asyncio.sleep(2 * (attempt + 1))
+    return None
 
 
 def insert_batch(conn, products, run_id, now, last_prices, category_map):
