@@ -264,6 +264,22 @@
             color: var(--text);
         }
 
+        .ver-todos {
+            display: block;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--muted);
+            padding: 0.75rem 0;
+            text-decoration: none;
+            border-top: 1px solid var(--border);
+            margin-top: 0.5rem;
+            transition: color 0.15s;
+        }
+
+        .ver-todos:hover {
+            color: var(--text);
+        }
+
         @keyframes fadeUp {
             from {
                 opacity: 0;
@@ -322,6 +338,15 @@
             debounceTimer = setTimeout(() => fetchResults(q), 300);
         });
 
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const q = input.value.trim();
+                if (q.length >= 2) {
+                    window.location.href = `search.html?q=${encodeURIComponent(q)}`;
+                }
+            }
+        });
+
         async function fetchResults(q) {
             results.style.display = 'block';
             results.innerHTML = '<p class="loading">buscando...</p>';
@@ -360,6 +385,9 @@
                     : `<span class="product-unavailable">indisponível</span>`;
 
                 const productUrl = `product.html?sku=${item.sku}&ean=${encodeURIComponent(item.ean)}&name=${encodeURIComponent(item.name)}&brand=${encodeURIComponent(item.brand || '')}&image=${encodeURIComponent(item.image || '')}&url=${encodeURIComponent(item.url)}`;
+
+                const verTodos = `<a class="ver-todos" href="search.html?q=${encodeURIComponent(input.value.trim())}">ver todos os resultados →</a>`;
+                results.innerHTML = label + cards + verTodos;
 
                 return `
       <a class="product-card" href="${productUrl}">
